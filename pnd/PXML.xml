@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PXML xmlns="http://openpandora.org/namespaces/PXML">
+  <application id="hexgempnd-pepone" appdata="hexgem_pepone">
+    <title lang="en_US">Hexgem</title>
+    <description lang="en_US">A Hexagonal puzzle game</description>
+    <version major="0" minor="0" release="1" build="1"/>
+    <exec command="./runme.sh" background="false" standalone="true"/>
+    <author name="Mathieu PEPONAS" website="" email="m.peponas@gmail.com"/>
+    <icon src="./hexgem.png"/>
+    <categories>
+      <category name="Game">
+               <subcategory name="BlocksGame"/>
+                </category>
+    </categories>
+  </application>
+</PXML>

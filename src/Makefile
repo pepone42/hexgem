@@ -5,36 +5,46 @@ LDFLAGS=`sdl-config --libs` -lSDL_mixer
 CCPND=pandora-gcc -g -Wall
 CFLAGSPND=`pandora-sdl-config --cflags` -DPANDORA
 LDFLAGSPND=`pandora-sdl-config --libs` -lSDL_mixer
-PNDTOOL=~/opt/pandora-dev/sdk_utils/
+PNDTOOL=~/devel/pandora-dev/sdk_utils/
 PANDORAIP=192.168.1.7
 PANDORADEST=/media/mmcblk0p1/pandora/apps
 PANDORAUSER=pepone
 
-OBJECT = board.o main.o screen.o fskip.o random.o hiscore.o sound.o
-OBJECTPND = board.pndo main.pndo screen.pndo fskip.pndo random.pndo hiscore.pndo sound.pndo
+OBJECT =	../build/host/board.o	../build/host/main.o	../build/host/screen.o 	\
+			../build/host/fskip.o	../build/host/random.o	../build/host/hiscore.o \
+			../build/host/sound.o
 
-all : puzzl hexgem.pandora
+OBJECTPND =	../build/pandora/board.o ../build/pandora/main.o 	../build/pandora/screen.o	\
+			../build/pandora/fskip.o ../build/pandora/random.o 	../build/pandora/hiscore.o 	\
+			../build/pandora/sound.o
 
-hexgem.pnd : hexgem.pandora 
-	cp hexgem.pandora pnd
-	$(PNDTOOL)/pnd_make.sh -d pnd/ -p hexgem.pnd -i pnd/hexgem.png
+all : ../build/host/hexgem
 
-push : hexgem.pnd
-	scp hexgem.pnd  $(PANDORAUSER)@$(PANDORAIP):$(PANDORADEST)
+../hexgem.pnd : ../build/pandora/hexgem
+	cp -rf ../pnd/ ../build/pandora/
+	cp ../build/pandora/hexgem ../build/pandora/pnd
+	$(PNDTOOL)/pnd_make.sh -d ../build/pandora/pnd -p ../hexgem.pnd -i ../build/pandora/pnd/hexgem.png
+
+pnd : ../hexgem.pnd
+
+push : ../hexgem.pnd
+	scp ../hexgem.pnd  $(PANDORAUSER)@$(PANDORAIP):$(PANDORADEST)
 
 
-puzzl : $(OBJECT)
+../build/host/hexgem : $(OBJECT)
+	mkdir -p ../build/host
 	$(CC) $^ -o $@ $(LDFLAGS)
 
-%.o : %.c
+../build/host/%.o : %.c
 	$(CC) -c $< -o $@ $(CFLAGS)
 
-hexgem.pandora : $(OBJECTPND)
+../build/pandora/hexgem : $(OBJECTPND)
+	mkdir -p ../build/pandora
 	$(CCPND) $^ -o $@ $(LDFLAGSPND)
 
-%.pndo : %.c
+../build/pandora/%.o : %.c
 	$(CCPND) -c $< -o $@ $(CFLAGSPND)
 
 
 clean:
-	rm *.o *.pndo puzzl hexgem.pandora
+	rm -rf ../build/host/* ../build/pandora/* ../hexgem.pnd ../sc.dat
