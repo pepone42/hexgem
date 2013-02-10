@@ -32,17 +32,17 @@ push : ../hexgem.pnd
 
 
 ../build/host/hexgem : $(OBJECT)
-	mkdir -p ../build/host
 	$(CC) $^ -o $@ $(LDFLAGS)
 
 ../build/host/%.o : %.c
+	mkdir -p ../build/host
 	$(CC) -c $< -o $@ $(CFLAGS)
 
 ../build/pandora/hexgem : $(OBJECTPND)
-	mkdir -p ../build/pandora
 	$(CCPND) $^ -o $@ $(LDFLAGSPND)
 
 ../build/pandora/%.o : %.c
+	mkdir -p ../build/pandora
 	$(CCPND) -c $< -o $@ $(CFLAGSPND)
 
 
