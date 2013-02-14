@@ -3,7 +3,7 @@ CFLAGS=`sdl-config --cflags`
 LDFLAGS=`sdl-config --libs` -lSDL_mixer
 
 CCPND=pandora-gcc -g -Wall
-CFLAGSPND=`pandora-sdl-config --cflags` -DPANDORA
+CFLAGSPND=`pandora-sdl-config --cflags` -DPANDORA -O2
 LDFLAGSPND=`pandora-sdl-config --libs` -lSDL_mixer
 PNDTOOL=~/devel/pandora-dev/sdk_utils/
 PANDORAIP=192.168.1.7

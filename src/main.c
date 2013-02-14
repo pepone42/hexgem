@@ -84,6 +84,13 @@ static SDL_Cursor *init_system_cursor(const char *image[])
 	return SDL_CreateCursor(data, mask, 32, 32, hot_x, hot_y);
 }
 
+void stoupper(char *s) {
+	int i=0;
+	while(s[i]!=0) {
+		s[i]=toupper(s[i]);
+		i++;
+	}
+}
 
 typedef enum RETCODE {
 	RT_VOID=0,
@@ -122,21 +129,21 @@ RETCODE run_game_mainloop(GAMETYPE gametype,int wide) {
 					free_board(board);
 					return RT_CANCEL;
 					break;
-				case SDLK_g:
-					board->timer=1;
-					break;
-#ifdef PANDORA
-				case SDLK_c:
-					if (mouse_curs==NULL)
-						mouse_curs=init_system_cursor(arrow);
-					SDL_SetCursor(mouse_curs);
-					SDL_ShowCursor(SDL_ENABLE);
-					break;
-#endif
-				case SDLK_UP:
-					if (board->cursy>0)
-						board->cursy--;
-					break;
+// 				case SDLK_g:
+// 					board->timer=1;
+// 					break;
+// #ifdef PANDORA
+// 				case SDLK_c:
+// 					if (mouse_curs==NULL)
+// 						mouse_curs=init_system_cursor(arrow);
+// 					SDL_SetCursor(mouse_curs);
+// 					SDL_ShowCursor(SDL_ENABLE);
+// 					break;
+// #endif
+// 				case SDLK_UP:
+// 					if (board->cursy>0)
+// 						board->cursy--;
+// 					break;
 				}
 				break;
 			case SDL_MOUSEBUTTONDOWN: 
@@ -179,10 +186,18 @@ RETCODE run_game_mainloop(GAMETYPE gametype,int wide) {
 		if (could_this_be_the_end(board)!=0) {
 			/* TODO: Save score in hiscore here */
 			if (ishiscore(gametype,board->score)) {
-				addhiscore(gametype,"mathieu",board->score);
+#ifdef PANDORA
+				char *string=getenv("USER");
+				stoupper(string);
+#else
+				char string[32];
+				play_music(SID_MUSIC3);
+				input_username(string,32);
+				printf("String =%s\n",string);
+#endif
+				addhiscore(gametype,string,board->score);
 			}
 			free_board(board);
-			play_music(SID_MUSIC3);
 			return RT_GAMEOVER;
 		}
 #ifdef PANDORA
@@ -213,8 +228,32 @@ void intro_loop(void) {
 		flip_screen();
 		counter--;
 	}
+
+
 }
 
+void show_highscore(void) {
+	SDL_Event event;
+	int counter=60*5;
+	int difficulty=0;
+	while (difficulty<4){
+		while (SDL_PollEvent(&event)) {
+			switch(event.type) {
+			case SDL_KEYDOWN:
+			case SDL_MOUSEBUTTONDOWN:
+				return;
+				break;
+			}
+		}
+		draw_scoreboard(difficulty|GM_LINE);
+		flip_screen();
+		counter--;
+		if (counter==0) {
+			difficulty++;
+			counter=60*5;
+		}
+	}
+}
 
 static SDL_Rect butt_r={112,67,176,35};
 
@@ -230,6 +269,7 @@ int main_menu(void) {
 	int gametype=GM_LINE;
 	int menulevel=2;
 	int x,mx,my,b=0;
+	int cnt=0;
 	while (menulevel!=0){
 		while (SDL_PollEvent(&event)) {
 			switch(event.type) {
@@ -261,7 +301,6 @@ int main_menu(void) {
 			butt_r.y=67;
 			if (do_button(&butt_r,"EASY",mx,my,b)) {
 				menulevel=0;gametype|=GM_EASY;
-				play_sound(SID_SWAP);
 			}
 			butt_r.y+=40;
 			if (do_button(&butt_r,"NORMAL",mx,my,b)) {
@@ -281,7 +320,11 @@ int main_menu(void) {
 			//TODO
 			break;
 		}
-
+		cnt++;
+		if (cnt>60*20) {
+			show_highscore();
+			cnt=0;
+		}
 		flip_screen();
 	}
 	return gametype;
@@ -319,6 +362,7 @@ int main(int argc,char *argv[]) {
 		case RT_GAMEOVER:
 			break;
 		}
+		play_music(SID_MUSIC2);
 	}
 	savehiscore("sc.dat");
 

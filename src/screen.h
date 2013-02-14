@@ -16,4 +16,6 @@ int draw_intro(void);
 int draw_main_menu(void);
 int draw_high_score(int gamemode);
 void draw_button(SDL_Rect *r,char *text);
+void SDL_textinput(SDL_Surface *font,SDL_Surface * dest,int x,int y,char *string,int size);
+
 #endif

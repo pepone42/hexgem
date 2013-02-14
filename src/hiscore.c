@@ -49,6 +49,7 @@ void addhiscore(int gametype,char *name,int score) {
 }
 int ishiscore(int gametype,int score) {
 	int i;
+	if (score==0) return 0;
 	for (i=0;i<MAXHISCORE;i++) {
 		if (score>=highscore[gametype][i].score) {
 			return 1;

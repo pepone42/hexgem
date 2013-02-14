@@ -705,7 +705,7 @@ int could_this_be_the_end(BOARD *board) {
 			// TODO: free list, we may have a combo running
 
 		board->anim_cnt++;
-		if (board->anim_cnt>240) {
+		if (board->anim_cnt>120) {
 			return 1;
 		}
 	}

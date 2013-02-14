@@ -2,6 +2,7 @@
 #include "screen.h"
 #include "board.h"
 #include "sound.h"
+#include "hiscore.h"
 
 static SDL_Surface *gem_surface,*little_gem_surface;
 static SDL_Surface *board_surface;
@@ -20,6 +21,8 @@ static SDL_Surface *button,*gamemode_button,*titlescreen,*dragonbox;
 // 	{PURPLE,"assets/gem_purple.bmp"},
 // 	{YELLOW,"assets/gem_yellow.bmp"},
 // };
+
+
 
 void SDL_putchar(SDL_Surface *font,SDL_Surface * dest, int x, int y, unsigned char c)
 {
@@ -61,6 +64,150 @@ void SDL_printf(SDL_Surface *font,SDL_Surface * dest, int x, int y, char *fmt, .
 	SDL_textout(font,dest,x,y,buf);
 }
 
+#define LEFT 1
+#define RIGHT 2
+#define BACKSPACE 3
+#define DEL 4
+
+int SDL_getchar(void)
+{
+	SDL_Event event;
+	SDL_WaitEvent(&event);
+    //while(SDL_PollEvent(&event)){}
+	switch (event.type) {
+	case SDL_KEYDOWN:
+		switch(event.key.keysym.sym) {
+		case SDLK_RETURN:
+			return -1;
+		case SDLK_LEFT:
+			return LEFT;
+		case SDLK_RIGHT:
+			return RIGHT;
+		case SDLK_DELETE:
+			return DEL;
+		case SDLK_BACKSPACE:
+			return BACKSPACE;
+			default:
+			break;
+		}
+		//printf("Press %d\n",event.key.keysym.unicode);
+		if ((event.key.keysym.unicode & 0xFF80)==0 ) {
+			int k=event.key.keysym.unicode;
+			printf("Press %d\n",k);
+			if ( k>=65+32) {
+				k-=32;
+			}
+			return k;
+		}
+		break;
+	}
+	return 0;
+}
+void SDL_textinput(SDL_Surface *font,SDL_Surface * dest,int x,int y,char *string,int size)
+{
+	int sx;
+	int a;
+	int s=0;
+	int i;
+	int pos=0;
+	SDL_Surface *save;
+	SDL_Rect save_rect={x,y,size*font->w/77,font->h};
+	SDL_Rect curs_rect={0,y+font->h,font->w/77,2};
+	
+	save=SDL_CreateRGBSurface(SDL_SWSURFACE,size*font->w/77,font->h,16, 0xF800, 0x7E0,0x1F, 0);
+	SDL_BlitSurface(dest,&save_rect,save,NULL);
+	memset(string,0,size+1);
+
+	sx=x;
+	SDL_EnableUNICODE(1);
+	while((a=SDL_getchar())!=-1) {
+		if (a==LEFT && pos>0) pos--;
+		if (a==RIGHT && pos<s) pos++;
+		if (a==BACKSPACE && pos>0) {
+			for(i=pos-1;i<s;i++)
+				string[i]=string[i+1];
+			s--;
+			pos--;
+		}
+		if (a==DEL && pos<s) {
+			for(i=pos;i<s;i++)
+				string[i]=string[i+1];
+			s--;
+		}
+		if (a>32  && s<size ) {
+			for(i=s;i>pos;i--)
+				string[i]=string[i-1];
+			string[pos]=(char)a;
+
+			s++;
+			pos++;
+		}
+		SDL_BlitSurface(save,NULL,dest,&save_rect);
+        //SDL_BlitSurface(save,NULL,buffer,&clear_rect);
+		SDL_textout(font,dest,sx,y,string);
+  //       /* cursor */
+  //       curs_rect.x=x+pos*font->w/77;
+		// SDL_FillRect(dest,&curs_rect,0xFFFF);
+#ifdef PANDORA
+		SDL_BlitSurface(buffer,NULL,screen,NULL);
+		SDL_Flip(screen);
+#else
+		SDL_SoftStretch(buffer,NULL,screen,NULL);
+		SDL_UpdateRect(screen,0,0,screen->w,screen->h);
+		//frame_skip();//SDL_Delay(13);
+#endif
+
+	}
+	SDL_EnableUNICODE(0);
+	SDL_FreeSurface(save);
+}
+
+void input_username(char *string,int size) {
+	SDL_printf(font_big,buffer,130,130,"YOU GOT A HISCORE!!");
+	SDL_printf(font_big,buffer,130,150,"   ENTER YOUR NAME:");
+	SDL_printf(font_big,buffer,130,180,"-------------------");
+	#ifdef PANDORA
+	SDL_BlitSurface(buffer,NULL,screen,NULL);
+	SDL_Flip(screen);
+#else
+	SDL_SoftStretch(buffer,NULL,screen,NULL);
+	SDL_UpdateRect(screen,0,0,screen->w,screen->h);
+		//frame_skip();//SDL_Delay(13);
+#endif
+	SDL_textinput(font_big,buffer,130,170,string,size);
+}
+
+
+/* blit a surface, zooming it if necessary, but don't zoom the border */
+void SDL_BlitZoomBorder(SDL_Surface *src,SDL_Rect *sr,int b,
+	SDL_Surface *dst,SDL_Rect *dr) {
+	SDL_Rect trect;
+	int sw,sh,sx,sy;
+	if (dr==NULL) return;
+	if (sr==NULL) {
+		sw=src->w;sh=src->h;
+		sx=0;sy=0;
+	} else {
+		sw=sr->w;sh=sr->h;
+		sx=sr->x;sy=sr->y;
+	}
+	trect.w=b;trect.h=b;
+	trect.x=sx;trect.y=sy;
+	SDL_BlitSurface(src,&trect,dst,dr);
+	trect.x=sw-b;trect.y=sy;
+	SDL_BlitSurface(src,&trect,dst,dr);
+	trect.x=sw-b;trect.y=sh-b;
+	SDL_BlitSurface(src,&trect,dst,dr);
+	trect.x=sx;trect.y=sh-b;
+	SDL_BlitSurface(src,&trect,dst,dr);
+
+	trect.w=sw-b*2;trect.h=sh-b*2;
+	trect.x=sx+b;trect.y=sy+b;
+	dr->x+=b;dr->y+=b;
+	dr->w=dr->w-b*2;dr->h=dr->h-b*2;
+	SDL_SoftStretch(src,&trect,dst,&dr);
+
+}
 
 void init_screen(void) {
 	int rc;
@@ -115,7 +262,7 @@ void draw_board_top(void) {
 void test_draw_gems(int col,int x,int y) {
 	static int cnt;int nb_frame=3;
 	SDL_Rect src={0,col*32,32,32},dst={x,y,32,32};
-	
+
 
 	if (cnt==60+9*nb_frame) cnt=0;
 	if (cnt>60) {
@@ -146,7 +293,7 @@ static void draw_gem_idle(GEM *g,int x,int y) {
 	SDL_BlitSurface(gem_surface,&src,buffer,&dst);
 	if (g->anim_cnt>=(9)*nb_frame) 
 		g->anim_cnt=0;
-	
+
 }
 
 static void draw_gem_off(GEM *g,int x,int y) {
@@ -192,8 +339,10 @@ static void draw_gem_alloff(GEM *g,int x,int y,int cnt) {
 static void draw_gem(BOARD *b,GEM *g,int x,int y) {
 	if (g->anim_state==IDLE || g->anim_state==FALL) {
 		if (b->timer<10*60 && b->timer>0) {
-			x+=(random_max(3)-2);
-			y+=(random_max(3)-2);
+			if (random_max(b->timer/20+1)<2) {
+				x+=(random_max(3)-2);
+				y+=(random_max(3)-2);
+			}
 		}
 		draw_gem_idle(g,x,y);
 	}
@@ -419,74 +568,89 @@ void draw_all (BOARD *b) {
 	}
 }
 
-void draw_scoreboard(int gametype,int *scores) {
+void draw_scoreboard(int gametype) {
 	char *diff_text[4]={"EASY","NORMAL","HARD","LEGEND"};
 	int d=gametype&GM_DIFFICULTY;
+	int i;
+	SDL_BlitSurface(titlescreen,NULL,buffer,NULL);
 
-	SDL_printf(font_big,buffer,40,20,"HIGHSCORE [%s]",diff_text[d]);
+	SDL_printf(font_big,buffer,30,60,"HIGHSCORE %s",diff_text[d]);
+	for (i=0;i<MAXHISCORE;i++) {
+		SDL_printf(font_big,buffer,30,80+i*20,"%s",highscore[gametype][i].name);
+		SDL_printf(font_big,buffer,280,80+i*20,"%*d",10,highscore[gametype][i].score);
+	}
 
 }
 
 /* converte screen space coord to gem coord and put the into gx,gy 
-	put -1,-1 if input is not valid
-*/
+	put -1,-1 if input is not valid */
 
-	void screenspace2gemspace(BOARD *b,int sx,int sy,int *gx,int *gy) {
-		int lb=80+12;
-		int rb=80+226;
-		int ub1=8;
-		int ub0=24;
-		int x,y;
+void screenspace2gemspace(BOARD *b,int sx,int sy,int *gx,int *gy) {
+	int lb=80+12;
+	int rb=80+226;
+	int ub1=8;
+	int ub0=24;
+	int x,y;
 
-		if (sx<lb || sx>rb) {
+	if (sx<lb || sx>rb) {
+		*gx=-1; *gy=-1; return;
+	}
+	x=(sx-lb)/24;
+	if ((x&1)==0) {
+		if (sy<ub0 || sy>(ub0+32*6) ) {
 			*gx=-1; *gy=-1; return;
 		}
-		x=(sx-lb)/24;
-		if ((x&1)==0) {
-			if (sy<ub0 || sy>(ub0+32*6) ) {
-				*gx=-1; *gy=-1; return;
-			}
-			y=(sy-ub0)/32;
-		} else {
-			if (sy<ub1 || sy>(ub1+32*7) ) {
-				*gx=-1; *gy=-1; return;
-			}
-			y=(sy-ub1)/32;
+		y=(sy-ub0)/32;
+	} else {
+		if (sy<ub1 || sy>(ub1+32*7) ) {
+			*gx=-1; *gy=-1; return;
 		}
-		*gx=x;*gy=y;
+		y=(sy-ub1)/32;
 	}
+	*gx=x;*gy=y;
+}
 
-	int g2s_x(int x) {
-		return 80+8+x*24;
-	}
-	int g2s_y(int x,int y) {
-		if (x&0x1)
-			return 8+y*32;
-		else
-			return 24+y*32;
-	}
+int g2s_x(int x) {
+	return 80+8+x*24;
+}
+int g2s_y(int x,int y) {
+	if (x&0x1)
+		return 8+y*32;
+	else
+		return 24+y*32;
+}
 
-	int draw_intro(void) {
-		SDL_BlitSurface(dragonbox,NULL,buffer,NULL);
-	}
-	int draw_main_menu(void) {
-		SDL_BlitSurface(titlescreen,NULL,buffer,NULL);
-	}
-	int draw_high_score(int gamemode) {
+static int bandeau_x=640;
+static char *bandeau="MADE FOR THE DRAGONBOX COMPETITION 2013 ... CODE AND GFX BY PEPONE ... MUSIC BY FOXSYNERGY ... FONT BY SPICYPIXEL ...";
 
-	}
-	void draw_button(SDL_Rect *r,char *text) {
-		int l=strlen(text)*8;
-		SDL_BlitSurface(button,NULL,buffer,r);
-		SDL_printf(font_big,buffer,200-l/2,r->y+(r->h-16)/2,text);
-	}
-	void flip_screen(void) {
+int draw_intro(void) {
+	SDL_BlitSurface(dragonbox,NULL,buffer,NULL);
+}
+int draw_main_menu(void) {
+	SDL_BlitSurface(titlescreen,NULL,buffer,NULL);
+}
+// void draw_scoreboard(int d) {
+// 	int i;
+// 	SDL_BlitSurface(titlescreen,NULL,buffer,NULL);	
+// 	switch(d) {
+// 		case 
+// 	}
+// }
+// int draw_high_score(int gamemode) {
+
+// }
+void draw_button(SDL_Rect *r,char *text) {
+	int l=strlen(text)*8;
+	SDL_BlitSurface(button,NULL,buffer,r);
+	SDL_printf(font_big,buffer,200-l/2,r->y+(r->h-16)/2,text);
+}
+void flip_screen(void) {
 #ifdef PANDORA
-		SDL_BlitSurface(buffer,NULL,screen,NULL);
-		SDL_Flip(screen);
+	SDL_BlitSurface(buffer,NULL,screen,NULL);
+	SDL_Flip(screen);
 #else
-		SDL_SoftStretch(buffer,NULL,screen,NULL);
-		SDL_UpdateRect(screen,0,0,screen->w,screen->h);
+	SDL_SoftStretch(buffer,NULL,screen,NULL);
+	SDL_UpdateRect(screen,0,0,screen->w,screen->h);
 		frame_skip();//SDL_Delay(13);
 #endif
 	}
