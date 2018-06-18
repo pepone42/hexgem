@@ -1,85 +1,89 @@
 /*  hexgem, a hexagonal puzzle game
  *  Copyright (C) 2013 Peponas Mathieu
  */
+module fskip;
 
-#include <unistd.h>
-#include <sys/time.h>
-#include <math.h>
+import core.stdc.stdint;
+import core.stdc.time;
+import core.stdc.math;
 
-#include "SDL.h"
-#include "hexgem.h"
-#include "fskip.h"
+import SDL;
+import hexgem;
+import fskip;
 
 
-#ifndef uclock_t
-#define uclock_t Uint32
-#endif
+// #ifndef uclock_t
+// #define uclock_t Uint32
+// #endif
 
-#define TICKS_PER_SEC 1000000UL
+alias uint uclock_t ;
+
+enum TICKS_PER_SEC = 1000000UL;
 static uclock_t F;
 
-#define MAX_FRAMESKIP 10
+enum MAX_FRAMESKIP = 10;
 
-char skip_next_frame = 0;
-#if defined(HAVE_GETTIMEOFDAY) && !defined(WII)
-static int CPU_FPS = 60;
-static struct timeval init_tv = { 0, 0 };
-#else
+byte skip_next_frame = 0;
+
+// #if defined(HAVE_GETTIMEOFDAY) && !defined(WII)
+// static int CPU_FPS = 60;
+// static struct timeval init_tv = { 0, 0 };
+// #else
 /* Looks like SDL_GetTicks is not as precise... */
 static int CPU_FPS=61;
 static Uint32 init_tv=0;
-#endif
+// #endif
 uclock_t bench;
 
-#if defined(HAVE_GETTIMEOFDAY) && !defined(WII)
-uclock_t get_ticks(void) {
-	struct timeval tv;
+// #if defined(HAVE_GETTIMEOFDAY) && !defined(WII)
+// uclock_t get_ticks(void) {
+// 	struct timeval tv;
 
-	gettimeofday(&tv, 0);
-	if (init_tv.tv_sec == 0)
-		init_tv = tv;
-	return (tv.tv_sec - init_tv.tv_sec) * TICKS_PER_SEC + tv.tv_usec
-			- init_tv.tv_usec;
+// 	gettimeofday(&tv, 0);
+// 	if (init_tv.tv_sec == 0)
+// 		init_tv = tv;
+// 	return (tv.tv_sec - init_tv.tv_sec) * TICKS_PER_SEC + tv.tv_usec
+// 			- init_tv.tv_usec;
 
-}
-#else
-Uint32 get_ticks(void)
+// }
+// #else
+Uint32 get_ticks()
 {
 	Uint32 tv;
 	if (init_tv==0)
 	init_tv=SDL_GetTicks();
 	return (SDL_GetTicks()-init_tv)*1000;
 }
-#endif
+// #endif
 
-void reset_frame_skip(void) {
-#if defined(HAVE_GETTIMEOFDAY) && !defined(WII)
-	init_tv.tv_usec = 0;
-	init_tv.tv_sec = 0;
-#else
+void reset_frame_skip() {
+// #if defined(HAVE_GETTIMEOFDAY) && !defined(WII)
+// 	init_tv.tv_usec = 0;
+// 	init_tv.tv_sec = 0;
+// #else
 	init_tv=0;
-#endif
+//#endif
 	skip_next_frame = 0;
 
-	F = (uclock_t) ((double) TICKS_PER_SEC / CPU_FPS);
+	F = cast(uclock_t) (cast(double) TICKS_PER_SEC / CPU_FPS);
 }
 
 static uclock_t target;
 static int nbFrame = 0;
 static uclock_t sec = 0;
 
-void init_frame_skip(void) {
+void init_frame_skip() {
 		target = get_ticks();
 		nbFrame = 0;
 		sec = 0;
 }
 
-int frame_skip(void) {
+int frame_skip() {
 	static int f2skip;
 	static uclock_t rfd;
 
 
-	static unsigned int nbFrame_moy = 0;
+	static uint nbFrame_moy = 0;
 	static int skpFrm = 0;
 
 
@@ -97,11 +101,11 @@ int frame_skip(void) {
 	if (1/*conf.autoframeskip*/) {
 		if (rfd < target && f2skip == 0)
 			while (get_ticks() < target) {
-#ifndef WIN32
+				version (Windows) {
 				// if (conf.sleep_idle) {
 				 	usleep(5);
 				// }
-#endif
+				}
 			}
 		// else {
 		// 	f2skip = (rfd - target) / (double) F;

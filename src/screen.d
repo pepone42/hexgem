@@ -1,14 +1,14 @@
-//#include "SDL.h"
-#include "screen.h"
-#include "board.h"
-#include "sound.h"
-#include "hiscore.h"
+import SDL;
+import screen;
+import board;
+import sound;
+import hiscore;
 
-static SDL_Surface *gem_surface,*little_gem_surface;
-static SDL_Surface *board_surface;
-static SDL_Surface *board_top_surface;
-static SDL_Surface *font_big,*font_small;
-static SDL_Surface *button,*gamemode_button,*titlescreen,*dragonbox;
+static SDL_Surface* gem_surface,little_gem_surface;
+static SDL_Surface* board_surface;
+static SDL_Surface* board_top_surface;
+static SDL_Surface* font_big,font_small;
+static SDL_Surface* button,gamemode_button,titlescreen,dragonbox;
 
 
 // static struct gem_asset_t {
@@ -24,7 +24,7 @@ static SDL_Surface *button,*gamemode_button,*titlescreen,*dragonbox;
 
 
 
-void SDL_putchar(SDL_Surface *font,SDL_Surface * dest, int x, int y, unsigned char c)
+void SDL_putchar(SDL_Surface *font,SDL_Surface * dest, int x, int y, ubyte c)
 {
 	static SDL_Rect font_rect, dest_rect;
 	int indice = c - 32;
@@ -32,14 +32,14 @@ void SDL_putchar(SDL_Surface *font,SDL_Surface * dest, int x, int y, unsigned ch
 	if (c < 32 || c > 109)
 		return;
 
-	font_rect.x = indice *  (font->w/77);
+	font_rect.x = indice *  (font.w/77);
 	font_rect.y = 0;
-	font_rect.w =  font->w/77;
-	font_rect.h =  font->h;
+	font_rect.w =  font.w/77;
+	font_rect.h =  font.h;
 	dest_rect.x = x;
 	dest_rect.y = y;
-	dest_rect.w =  font->w/77;
-	dest_rect.h =  font->h;
+	dest_rect.w =  font.w/77;
+	dest_rect.h =  font.h;
 
 	SDL_BlitSurface(font, &font_rect, dest, &dest_rect);
 
@@ -49,14 +49,14 @@ void SDL_textout(SDL_Surface *font,SDL_Surface * dest, int x, int y, const char 
 {
 	int i;int xx=x;
 	for (i = 0; i < strlen(string); i++) {
-		if (string[i]=='\n') {xx=x;y+=font->h;continue;}
+		if (string[i]=='\n') {xx=x;y+=font.h;continue;}
 		SDL_putchar(font,dest, xx , y, string[i]);
-		xx+=(font->w/77);
+		xx+=(font.w/77);
 	}
 }
 
 void SDL_printf(SDL_Surface *font,SDL_Surface * dest, int x, int y, char *fmt, ...) {
-	char buf[512];
+	char[512] buf;
 	va_list pvar;
 	va_start(pvar, fmt);
 
@@ -64,12 +64,12 @@ void SDL_printf(SDL_Surface *font,SDL_Surface * dest, int x, int y, char *fmt, .
 	SDL_textout(font,dest,x,y,buf);
 }
 
-#define LEFT 1
-#define RIGHT 2
-#define BACKSPACE 3
-#define DEL 4
+enum LEFT = 1;
+enum RIGHT = 2;
+enum BACKSPACE = 3;
+enum DEL = 4;
 
-int SDL_getchar(void)
+int SDL_getchar()
 {
 	SDL_Event event;
 	SDL_WaitEvent(&event);
@@ -111,10 +111,10 @@ void SDL_textinput(SDL_Surface *font,SDL_Surface * dest,int x,int y,char *string
 	int i;
 	int pos=0;
 	SDL_Surface *save;
-	SDL_Rect save_rect={x,y,size*font->w/77,font->h};
-	SDL_Rect curs_rect={0,y+font->h,font->w/77,2};
+	SDL_Rect save_rect={x,y,size*font.w/77,font.h};
+	SDL_Rect curs_rect={0,y+font.h,font.w/77,2};
 	
-	save=SDL_CreateRGBSurface(SDL_SWSURFACE,size*font->w/77,font->h,16, 0xF800, 0x7E0,0x1F, 0);
+	save=SDL_CreateRGBSurface(SDL_SWSURFACE,size*font.w/77,font.h,16, 0xF800, 0x7E0,0x1F, 0);
 	SDL_BlitSurface(dest,&save_rect,save,NULL);
 	memset(string,0,size+1);
 
@@ -137,7 +137,7 @@ void SDL_textinput(SDL_Surface *font,SDL_Surface * dest,int x,int y,char *string
 		if (a>32  && s<size ) {
 			for(i=s;i>pos;i--)
 				string[i]=string[i-1];
-			string[pos]=(char)a;
+			string[pos]=cast(char)a;
 
 			s++;
 			pos++;
@@ -146,16 +146,16 @@ void SDL_textinput(SDL_Surface *font,SDL_Surface * dest,int x,int y,char *string
         //SDL_BlitSurface(save,NULL,buffer,&clear_rect);
 		SDL_textout(font,dest,sx,y,string);
   //       /* cursor */
-  //       curs_rect.x=x+pos*font->w/77;
+  //       curs_rect.x=x+pos*font.w/77;
 		// SDL_FillRect(dest,&curs_rect,0xFFFF);
-#ifdef PANDORA
+version (PANDORA) {
 		SDL_BlitSurface(buffer,NULL,screen,NULL);
 		SDL_Flip(screen);
-#else
+} else {
 		SDL_SoftStretch(buffer,NULL,screen,NULL);
-		SDL_UpdateRect(screen,0,0,screen->w,screen->h);
+		SDL_UpdateRect(screen,0,0,screen.w,screen.h);
 		//frame_skip();//SDL_Delay(13);
-#endif
+}
 
 	}
 	SDL_EnableUNICODE(0);
@@ -166,14 +166,14 @@ void input_username(char *string,int size) {
 	SDL_printf(font_big,buffer,130,130,"YOU GOT A HISCORE!!");
 	SDL_printf(font_big,buffer,130,150,"   ENTER YOUR NAME:");
 	SDL_printf(font_big,buffer,130,180,"-------------------");
-	#ifdef PANDORA
+version (PANDORA) {
 	SDL_BlitSurface(buffer,NULL,screen,NULL);
 	SDL_Flip(screen);
-#else
+} else {
 	SDL_SoftStretch(buffer,NULL,screen,NULL);
-	SDL_UpdateRect(screen,0,0,screen->w,screen->h);
+	SDL_UpdateRect(screen,0,0,screen.w,screen.h);
 		//frame_skip();//SDL_Delay(13);
-#endif
+}
 	SDL_textinput(font_big,buffer,130,170,string,size);
 }
 
@@ -185,11 +185,11 @@ void SDL_BlitZoomBorder(SDL_Surface *src,SDL_Rect *sr,int b,
 	int sw,sh,sx,sy;
 	if (dr==NULL) return;
 	if (sr==NULL) {
-		sw=src->w;sh=src->h;
+		sw=src.w;sh=src.h;
 		sx=0;sy=0;
 	} else {
-		sw=sr->w;sh=sr->h;
-		sx=sr->x;sy=sr->y;
+		sw=sr.w;sh=sr.h;
+		sx=sr.x;sy=sr.y;
 	}
 	trect.w=b;trect.h=b;
 	trect.x=sx;trect.y=sy;
@@ -203,33 +203,33 @@ void SDL_BlitZoomBorder(SDL_Surface *src,SDL_Rect *sr,int b,
 
 	trect.w=sw-b*2;trect.h=sh-b*2;
 	trect.x=sx+b;trect.y=sy+b;
-	dr->x+=b;dr->y+=b;
-	dr->w=dr->w-b*2;dr->h=dr->h-b*2;
+	dr.x+=b;dr.y+=b;
+	dr.w=dr.w-b*2;dr.h=dr.h-b*2;
 	SDL_SoftStretch(src,&trect,dst,&dr);
 
 }
 
-void init_screen(void) {
+void init_screen() {
 	int rc;
 	rc=SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO);
 	if(rc!=0) {
 		printf("Error while SDL_Init\n");
 		exit(1);
 	}
-#ifdef PANDORA
+version (PANDORA) {
 	screen=SDL_SetVideoMode(400,240,16,SDL_HWSURFACE|SDL_DOUBLEBUF|SDL_FULLSCREEN);
-#else
+} else {
 	screen=SDL_SetVideoMode(400,240,16,SDL_SWSURFACE);
-#endif
+}
 	buffer=SDL_CreateRGBSurface(SDL_SWSURFACE,400,240,16,0xF800, 0x7E0, 0x1F, 0);
 }
 
 SDL_Surface *load_bmp(char *filename,int colorkey) {
-	SDL_Surface *temp,*res;
+	SDL_Surface* temp,res;
 
 	temp=SDL_LoadBMP(filename);
 	if (colorkey) {
-		SDL_SetColorKey(temp,SDL_SRCCOLORKEY,SDL_MapRGB(temp->format, 255, 0, 255));
+		SDL_SetColorKey(temp,SDL_SRCCOLORKEY,SDL_MapRGB(temp.format, 255, 0, 255));
 	}
 	res=SDL_DisplayFormat(temp);
 	SDL_FreeSurface(temp);
@@ -237,7 +237,7 @@ SDL_Surface *load_bmp(char *filename,int colorkey) {
 	return res;
 }
 
-void load_assets(void) {
+void load_assets() {
 	gem_surface=load_bmp("assets/gems.bmp",1);
 	little_gem_surface=load_bmp("assets/little_gem.bmp",1);
 	board_surface=load_bmp("assets/board169.bmp",0);
@@ -250,11 +250,11 @@ void load_assets(void) {
 	dragonbox=load_bmp("assets/dragonbox.bmp",0);
 }
 
-void draw_board(void) {
+void draw_board() {
 	SDL_BlitSurface(board_surface,NULL,buffer,NULL);
 }
-void draw_board_top(void) {
-	SDL_Rect dst={80,0,board_top_surface->w,board_top_surface->h};
+void draw_board_top() {
+	SDL_Rect dst={80,0,board_top_surface.w,board_top_surface.h};
 	SDL_BlitSurface(board_top_surface,NULL,buffer,&dst);
 }
 
@@ -275,54 +275,54 @@ void test_draw_gems(int col,int x,int y) {
 
 static void draw_gem_idle(GEM *g,int x,int y) {
 	int nb_frame=5;
-	SDL_Rect src={0,(g->col)*32,32,32},dst={x,y,32,32};
-	if (g->col==NOCOL || g->col==OUTOFBOUND) return;
-	// if (g->to_del==1) {
-	// 	src.y=(g->col+9)*32;
+	SDL_Rect src={0,(g.col)*32,32,32},dst={x,y,32,32};
+	if (g.col==NOCOL || g.col==OUTOFBOUND) return;
+	// if (g.to_del==1) {
+	// 	src.y=(g.col+9)*32;
 	// 	src.x=32*4;
 	// 	SDL_BlitSurface(gem_surface,&src,buffer,&dst);
 	// 	return;
 	// }
 
-	if (g->anim_cnt==0 && (rand()&0xFFF)==0x1) g->anim_cnt=1;
+	if (g.anim_cnt==0 && (rand()&0xFFF)==0x1) g.anim_cnt=1;
 
-	if (g->anim_cnt>0) {
-		src.x=32*(g->anim_cnt/nb_frame);
-		g->anim_cnt++;
+	if (g.anim_cnt>0) {
+		src.x=32*(g.anim_cnt/nb_frame);
+		g.anim_cnt++;
 	}
 	SDL_BlitSurface(gem_surface,&src,buffer,&dst);
-	if (g->anim_cnt>=(9)*nb_frame) 
-		g->anim_cnt=0;
+	if (g.anim_cnt>=(9)*nb_frame) 
+		g.anim_cnt=0;
 
 }
 
 static void draw_gem_off(GEM *g,int x,int y) {
 	int nb_frame=2;
-	SDL_Rect src={0,(g->backup_col+9)*32,32,32},dst={x,y,32,32};
+	SDL_Rect src={0,(g.backup_col+9)*32,32,32},dst={x,y,32,32};
 
-	g->off_cnt++;	
-	src.x=32*(g->off_cnt/nb_frame);
+	g.off_cnt++;	
+	src.x=32*(g.off_cnt/nb_frame);
 
 
 
-	if (g->off_cnt>=(9)*nb_frame) {
+	if (g.off_cnt>=(9)*nb_frame) {
 		// stay on last frame
 		src.x=32*8;
-		dst.x+=(g->off_cnt-(9*nb_frame))/2;
-		dst.y-=(g->off_cnt-(9*nb_frame))/2;
-		if (g->off_cnt>=(13)*nb_frame) {
-			g->off_cnt=0;
-			g->anim_state=IDLE;
-			g->backup_col=NOCOL;
+		dst.x+=(g.off_cnt-(9*nb_frame))/2;
+		dst.y-=(g.off_cnt-(9*nb_frame))/2;
+		if (g.off_cnt>=(13)*nb_frame) {
+			g.off_cnt=0;
+			g.anim_state=IDLE;
+			g.backup_col=NOCOL;
 		}
-		if (g->off_cnt&0X1) SDL_BlitSurface(gem_surface,&src,buffer,&dst);
+		if (g.off_cnt&0X1) SDL_BlitSurface(gem_surface,&src,buffer,&dst);
 	} else
 	SDL_BlitSurface(gem_surface,&src,buffer,&dst);
 
 }
 static void draw_gem_alloff(GEM *g,int x,int y,int cnt) {
 	int nb_frame=2;
-	SDL_Rect src={0,(g->col+9)*32,32,32},dst={x,y,32,32};
+	SDL_Rect src={0,(g.col+9)*32,32,32},dst={x,y,32,32};
 
 	src.x=32*(cnt/nb_frame);
 	if (cnt>=(9)*nb_frame) {
@@ -337,34 +337,34 @@ static void draw_gem_alloff(GEM *g,int x,int y,int cnt) {
 }
 
 static void draw_gem(BOARD *b,GEM *g,int x,int y) {
-	if (g->anim_state==IDLE || g->anim_state==FALL) {
-		if (b->timer<10*60 && b->timer>0) {
-			if (random_max(b->timer/20+1)<2) {
+	if (g.anim_state==IDLE || g.anim_state==FALL) {
+		if (b.timer<10*60 && b.timer>0) {
+			if (random_max(b.timer/20+1)<2) {
 				x+=(random_max(3)-2);
 				y+=(random_max(3)-2);
 			}
 		}
 		draw_gem_idle(g,x,y);
 	}
-	if (g->anim_state==SWAP) {
-		g->swap_cnt--;//SDL_Delay(100);
-		if (g->swap_cnt==0) {
-			check_swap(b,g->swap_id);
+	if (g.anim_state==SWAP) {
+		g.swap_cnt--;//SDL_Delay(100);
+		if (g.swap_cnt==0) {
+			check_swap(b,g.swap_id);
 		}
-		g->x+=g->dx;
-		g->y+=g->dy;
-		draw_gem_idle(g,g->x,g->y);
+		g.x+=g.dx;
+		g.y+=g.dy;
+		draw_gem_idle(g,g.x,g.y);
 	}
-	if (g->anim_state==SWAP_BACK) {
-		g->swap_cnt--;//SDL_Delay(100);
-		if (g->swap_cnt==0) {
-			end_swap_back(b,g->swap_id);
+	if (g.anim_state==SWAP_BACK) {
+		g.swap_cnt--;//SDL_Delay(100);
+		if (g.swap_cnt==0) {
+			end_swap_back(b,g.swap_id);
 		}
-		g->x-=g->dx;
-		g->y-=g->dy;
-		draw_gem_idle(g,g->x,g->y);
+		g.x-=g.dx;
+		g.y-=g.dy;
+		draw_gem_idle(g,g.x,g.y);
 	}
-	if (g->backup_col!=NOCOL)
+	if (g.backup_col!=NOCOL)
 		draw_gem_off(g,x,y);
 }
 static void draw_curs(int x,int y) {
@@ -373,12 +373,12 @@ static void draw_curs(int x,int y) {
 	SDL_BlitSurface(gem_surface,&src,buffer,&dst);
 }
 
-#define MAXSPEED 21
-int fspeed[MAXSPEED]={0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,2,2,3,5,8};
+enum MAXSPEED = 21;
+int[MAXSPEED] fspeed=[0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,2,2,3,5,8];
 //int fspeed[MAXSPEED]={0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1};
 void draw_gems(BOARD *b) {
 	int i,j;
-	GEMLIST *l,*p;
+	GEMLIST* l,p;
 	GEM *g;
 	int floor_y;
 	int need_reduce=0;
@@ -386,28 +386,28 @@ void draw_gems(BOARD *b) {
 
 
 	/*  Falling gem */
-	for (i=b->w-1;i>=0;--i) {
+	for (i=b.w-1;i>=0;--i) {
 		/* where is the floor? */
 		j=get_floor_level(b,i);
 		if (i&1) floor_y=8+j*32; else floor_y=24+j*32;
 
 		/* draw the gem */
-		for(l=b->fallbuf[i];l;l=l->next) {
+		for(l=b.fallbuf[i];l;l=l.next) {
 			if (j==-1) printf("ASSERT ERROR: col %d floor is on top, and fall list not empty\n!",i);
 
 
 			
-			l->g->fall_y+=fspeed[l->g->fall_speed];
-			if (l->g->fall_speed<MAXSPEED-1) l->g->fall_speed++;
-			if (l->g->fall_y>floor_y) {
+			l.g.fall_y+=fspeed[l.g.fall_speed];
+			if (l.g.fall_speed<MAXSPEED-1) l.g.fall_speed++;
+			if (l.g.fall_y>floor_y) {
 				/* The eagle is landing */
 				g=getgem(b,i,j);
 				if (g) {
 					need_reduce=1;
-					g->col=l->g->col;
-					g->anim_state=IDLE;
-					g->anim_cnt=0;
-					g->to_del=0;
+					g.col=l.g.col;
+					g.anim_state=IDLE;
+					g.anim_cnt=0;
+					g.to_del=0;
 
 
 				} else 
@@ -415,13 +415,13 @@ void draw_gems(BOARD *b) {
 
 				j=get_floor_level(b,i);
 				if (i&1) floor_y=8+j*32; else floor_y=24+j*32;
-				l->g->to_del=1;
+				l.g.to_del=1;
 			}
-			if (l->g->to_del!=1) {
+			if (l.g.to_del!=1) {
 				if ((i&1)==1) 
-					draw_gem(b,l->g,80+8+i*24,l->g->fall_y);
-				else //if (j!=b->h-1)
-					draw_gem(b,l->g,80+8+i*24,l->g->fall_y);
+					draw_gem(b,l.g,80+8+i*24,l.g.fall_y);
+				else //if (j!=b.h-1)
+					draw_gem(b,l.g,80+8+i*24,l.g.fall_y);
 			}
 		}
 		/* delete */
@@ -430,30 +430,30 @@ void draw_gems(BOARD *b) {
 
 
 	/* Draw gem */
-	for (i=b->w-1;i>=0;--i) {
-		for (j=0;j<(i&1?b->h:b->h-1);j++) {
+	for (i=b.w-1;i>=0;--i) {
+		for (j=0;j<(i&1?b.h:b.h-1);j++) {
 			//printf("Draw %d,%d\n",i,j);
 			if ((i&1)==1) 
-				draw_gem(b,&b->gem[i+j*b->w],80+8+i*24,8+j*32);
-			else //if (j!=b->h-1)
-				draw_gem(b,&b->gem[i+j*b->w],80+8+i*24,24+j*32);
+				draw_gem(b,&b.gem[i+j*b.w],80+8+i*24,8+j*32);
+			else //if (j!=b.h-1)
+				draw_gem(b,&b.gem[i+j*b.w],80+8+i*24,24+j*32);
 
 		}
 	}
 
 	/* Draw curs */
-	if (b->cursx!=-1 && b->cursy!=-1) {
-		if ((b->cursx&1)==1) 
-			draw_curs(80+8+b->cursx*24,8+b->cursy*32);
-		else if (b->cursy!=b->h-1)
-			draw_curs(80+8+b->cursx*24,24+b->cursy*32);
+	if (b.cursx!=-1 && b.cursy!=-1) {
+		if ((b.cursx&1)==1) 
+			draw_curs(80+8+b.cursx*24,8+b.cursy*32);
+		else if (b.cursy!=b.h-1)
+			draw_curs(80+8+b.cursx*24,24+b.cursy*32);
 	}
 
 	/* Draw scores */
 	for (i=0;i<MAXGEMCOL*2;i++) {
-		if (b->scores[i][3]>0) {
-			SDL_printf(font_big,buffer,b->scores[i][0]+8,b->scores[i][1]+8,"%d",b->scores[i][2]*10);
-			b->scores[i][3]--;
+		if (b.scores[i][3]>0) {
+			SDL_printf(font_big,buffer,b.scores[i][0]+8,b.scores[i][1]+8,"%d",b.scores[i][2]*10);
+			b.scores[i][3]--;
 		}
 	}
 
@@ -467,34 +467,34 @@ void draw_gems(BOARD *b) {
 void print_score(BOARD *b) {
 	int i;
 	SDL_Rect src={0,0,14,12},dst={346,28,14,12};
-	for (i=0;i<b->maxcol;i++) {
+	for (i=0;i<b.maxcol;i++) {
 		src.y=i*13;
-		if (b->gcount[i]>=b->goal)
+		if (b.gcount[i]>=b.goal)
 			src.x=15;
 		else
 			src.x=0;
 		SDL_BlitSurface(little_gem_surface,&src,buffer,&dst);
-		SDL_printf(font_small,buffer,362,30+i*13,"%*d",4,b->gcount[i]);
+		SDL_printf(font_small,buffer,362,30+i*13,"%*d",4,b.gcount[i]);
 		dst.y+=13;
 	}
 	SDL_printf(font_small,buffer,355,210,"SCORE");
-	SDL_printf(font_big,buffer,315,219,"%*d",10,b->score);
+	SDL_printf(font_big,buffer,315,219,"%*d",10,b.score);
 
-	SDL_printf(font_small,buffer,320,3,"LEVEL  %d",b->level);
-	SDL_printf(font_small,buffer,320,12,"TARGET %d",b->goal);
+	SDL_printf(font_small,buffer,320,3,"LEVEL  %d",b.level);
+	SDL_printf(font_small,buffer,320,12,"TARGET %d",b.goal);
 
 	SDL_printf(font_small,buffer,346,142,"LUCKY");	
 	dst.x=360;dst.y=152;
-	src.x=0;src.y=b->lucky*13;
+	src.x=0;src.y=b.lucky*13;
 	SDL_BlitSurface(little_gem_surface,&src,buffer,&dst);
 
-	if (b->timer>0) 
-		SDL_printf(font_small,buffer,188,2,"%03d",b->timer/60);
+	if (b.timer>0) 
+		SDL_printf(font_small,buffer,188,2,"%03d",b.timer/60);
 	else
 		SDL_printf(font_small,buffer,188,2,"XXX");
 
-	if (b->combo>1) {
-		SDL_printf(font_small,buffer,338,172,"CHAIN %d",b->combo);
+	if (b.combo>1) {
+		SDL_printf(font_small,buffer,338,172,"CHAIN %d",b.combo);
 	}
 }
 
@@ -502,59 +502,59 @@ void draw_all (BOARD *b) {
 	int i,j,y;
 	SDL_Rect src={0,0,14,12},dst={346,28,14,12};
 	draw_board();
-	if (b->anim_state==LEVELUP) {
+	if (b.anim_state==LEVELUP) {
 		SDL_printf(font_big,buffer,160,100,"NICE! GG!");
 		//SDL_printf(font_small,buffer,160,100,"BONUS %d",);
-		b->anim_cnt+=1;
-		if (b->anim_cnt>120) {
-			b->anim_state=INTRO;
-			b->anim_cnt=0;
+		b.anim_cnt+=1;
+		if (b.anim_cnt>120) {
+			b.anim_state=INTRO;
+			b.anim_cnt=0;
 		}
-	} else if (b->anim_state==INTRO) {
+	} else if (b.anim_state==INTRO) {
 		SDL_printf(font_big,buffer,160,100,"GET READY!");
 		SDL_printf(font_small,buffer,192,120,"GEM X2");
 		dst.x=224;dst.y=130;
-		src.x=0;src.y=b->lucky*13;
+		src.x=0;src.y=b.lucky*13;
 		SDL_BlitSurface(little_gem_surface,&src,buffer,&dst);
 
-		b->anim_cnt+=1;
-		if (b->anim_cnt>120) {
-			b->anim_state=CREATE;
-			b->anim_cnt=0;
+		b.anim_cnt+=1;
+		if (b.anim_cnt>120) {
+			b.anim_state=CREATE;
+			b.anim_cnt=0;
 		}
-	} else if (b->anim_state==CREATE) {
+	} else if (b.anim_state==CREATE) {
 		/* Draw gem */
-		y=b->anim_cnt-240;
-		for (i=b->w-1;i>=0;--i) {
-			for (j=0;j<(i&1?b->h:b->h-1);j++) {
+		y=b.anim_cnt-240;
+		for (i=b.w-1;i>=0;--i) {
+			for (j=0;j<(i&1?b.h:b.h-1);j++) {
 				//printf("Draw %d,%d\n",i,j);
 				if ((i&1)==1) 
-					draw_gem(b,&b->gem[i+j*b->w],80+8+i*24,y+8+j*32);
-				else //if (j!=b->h-1)
-					draw_gem(b,&b->gem[i+j*b->w],80+8+i*24,y+24+j*32);
+					draw_gem(b,&b.gem[i+j*b.w],80+8+i*24,y+8+j*32);
+				else //if (j!=b.h-1)
+					draw_gem(b,&b.gem[i+j*b.w],80+8+i*24,y+24+j*32);
 
 			}
 		}
-		b->anim_cnt+=8;
-		if (b->anim_cnt>240) {
-			b->anim_state=IDLE;
-			b->anim_cnt=0;
-			b->block_input=0;
+		b.anim_cnt+=8;
+		if (b.anim_cnt>240) {
+			b.anim_state=IDLE;
+			b.anim_cnt=0;
+			b.block_input=0;
 		}
-	} else if (b->anim_state==DELALL) {
-		for (i=b->w-1;i>=0;--i) {
-			for (j=0;j<(i&1?b->h:b->h-1);j++) {
+	} else if (b.anim_state==DELALL) {
+		for (i=b.w-1;i>=0;--i) {
+			for (j=0;j<(i&1?b.h:b.h-1);j++) {
 				//printf("Draw %d,%d\n",i,j);
 				if ((i&1)==1) 
-					draw_gem_alloff(&b->gem[i+j*b->w],80+8+i*24,8+j*32,b->anim_cnt);
-				else //if (j!=b->h-1)
-					draw_gem_alloff(&b->gem[i+j*b->w],80+8+i*24,24+j*32,b->anim_cnt);
+					draw_gem_alloff(&b.gem[i+j*b.w],80+8+i*24,8+j*32,b.anim_cnt);
+				else //if (j!=b.h-1)
+					draw_gem_alloff(&b.gem[i+j*b.w],80+8+i*24,24+j*32,b.anim_cnt);
 			}
 		}
-		b->anim_cnt++;
-		if (b->anim_cnt>=13) {
-			b->anim_state=LEVELUP;
-			b->anim_cnt=0;
+		b.anim_cnt++;
+		if (b.anim_cnt>=13) {
+			b.anim_state=LEVELUP;
+			b.anim_cnt=0;
 			fill_board(b);
 		}
 	} else { //IDLE
@@ -563,13 +563,13 @@ void draw_all (BOARD *b) {
 	draw_board_top();
 	print_score(b);
 
-	if (b->anim_state==GAMEOVER) {
+	if (b.anim_state==GAMEOVER) {
 		SDL_printf(font_big,buffer,160,100,"GAME OVER");
 	}
 }
 
 void draw_scoreboard(int gametype) {
-	char *diff_text[4]={"EASY","NORMAL","HARD","LEGEND"};
+	char*[4] diff_text={"EASY","NORMAL","HARD","LEGEND"};
 	int d=gametype&GM_DIFFICULTY;
 	int i;
 	SDL_BlitSurface(titlescreen,NULL,buffer,NULL);
@@ -621,12 +621,13 @@ int g2s_y(int x,int y) {
 }
 
 static int bandeau_x=640;
-static char *bandeau="MADE FOR THE DRAGONBOX COMPETITION 2013 ... CODE AND GFX BY PEPONE ... MUSIC BY FOXSYNERGY ... FONT BY SPICYPIXEL ...";
+//static char* bandeau="MADE FOR THE DRAGONBOX COMPETITION 2013 ... CODE AND GFX BY PEPONE ... MUSIC BY FOXSYNERGY ... FONT BY SPICYPIXEL ...";
+static string bandeau="MADE FOR THE DRAGONBOX COMPETITION 2013 ... CODE AND GFX BY PEPONE ... MUSIC BY FOXSYNERGY ... FONT BY SPICYPIXEL ...";
 
-int draw_intro(void) {
+int draw_intro() {
 	SDL_BlitSurface(dragonbox,NULL,buffer,NULL);
 }
-int draw_main_menu(void) {
+int draw_main_menu() {
 	SDL_BlitSurface(titlescreen,NULL,buffer,NULL);
 }
 // void draw_scoreboard(int d) {
@@ -642,15 +643,15 @@ int draw_main_menu(void) {
 void draw_button(SDL_Rect *r,char *text) {
 	int l=strlen(text)*8;
 	SDL_BlitSurface(button,NULL,buffer,r);
-	SDL_printf(font_big,buffer,200-l/2,r->y+(r->h-16)/2,text);
+	SDL_printf(font_big,buffer,200-l/2,r.y+(r.h-16)/2,text);
 }
-void flip_screen(void) {
-#ifdef PANDORA
+void flip_screen() {
+version (PANDORA) {
 	SDL_BlitSurface(buffer,NULL,screen,NULL);
 	SDL_Flip(screen);
-#else
+} else {
 	SDL_SoftStretch(buffer,NULL,screen,NULL);
-	SDL_UpdateRect(screen,0,0,screen->w,screen->h);
+	SDL_UpdateRect(screen,0,0,screen.w,screen.h);
 		frame_skip();//SDL_Delay(13);
-#endif
+}
 	}

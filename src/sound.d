@@ -1,11 +1,26 @@
-#include "SDL_mixer.h"
-#include "sound.h"
+import SDL_mixer;
+import sound;
 
-static Mix_Chunk 	*mc_swap,*mc_fall,*mc_wrong,
-*mc_combo1,*mc_combo2,*mc_combo3,*mc_combo4,*mc_gameover;
-static Mix_Music 	*music1,*music2,*music3;
+enum SOUNDID {
+	SID_SWAP,
+	SID_FALL,
+	SID_WRONG,
+	SID_COMBO1,
+	SID_COMBO2,
+	SID_COMBO3,
+	SID_COMBO4,
+	SID_GAMEOVER,
 
-void init_sound(void) {
+	SID_MUSIC1,
+	SID_MUSIC2,
+	SID_MUSIC3
+};
+
+static Mix_Chunk* mc_swap,mc_fall,mc_wrong,
+mc_combo1,mc_combo2,mc_combo3,mc_combo4,mc_gameover;
+static Mix_Music* music1,music2,music3;
+
+void init_sound() {
 	/* Same setup as before */
 	int audio_rate = 44100;
 	Uint16 audio_format = AUDIO_S16; 
@@ -16,7 +31,7 @@ void init_sound(void) {
 		return;
 	}
 }
-void load_sound(void) {
+void load_sound() {
 	mc_swap = Mix_LoadWAV("assets/swap.wav");
 	mc_wrong = Mix_LoadWAV("assets/badmove.wav");
 	mc_fall = Mix_LoadWAV("assets/fall.wav");
@@ -75,7 +90,7 @@ void play_music(SOUNDID id) {
 void fadout_music(int msec) {
 	Mix_FadeOutMusic(msec);
 }
-void stop_music(void) {
+void stop_music() {
 	Mix_RewindMusic();
 	Mix_HaltMusic();
 }

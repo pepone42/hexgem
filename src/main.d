@@ -1,13 +1,17 @@
-#include "board.h"
-#include "screen.h"
-#include "fskip.h"
-#include "hiscore.h"
-#include "sound.h"
+import core.stdc.stdio;
+import core.stdc.ctype;
+
+import SDL;
+import board;
+import screen;
+import fskip;
+import hiscore;
+import sound;
  /* Stolen from the mailing list */
        /* Creates a new mouse cursor from an XPM */
 
        /* XPM */
-static const char *arrow[] = {
+static const char*[] arrow = [
          /* width height num_colors chars_per_pixel */
 	"    32    32        3            1",
          /* colors */
@@ -48,13 +52,13 @@ static const char *arrow[] = {
 	"                                ",
 	"                                ",
 	"0,0"
-};
+];
 
-static SDL_Cursor *init_system_cursor(const char *image[])
+static SDL_Cursor *init_system_cursor(const char*[] image)
 {
 	int i, row, col;
-	Uint8 data[4*32];
-	Uint8 mask[4*32];
+	Uint8[4*32] data;
+	Uint8[4*32] mask;
 	int hot_x, hot_y;
 
 	i = -1;
@@ -77,6 +81,8 @@ static SDL_Cursor *init_system_cursor(const char *image[])
 				break;
 			case ' ':
 				break;
+			default:
+				assert(0);
 			}
 		}
 	}
@@ -87,16 +93,16 @@ static SDL_Cursor *init_system_cursor(const char *image[])
 void stoupper(char *s) {
 	int i=0;
 	while(s[i]!=0) {
-		s[i]=toupper(s[i]);
+		s[i]=cast(char)toupper(s[i]);
 		i++;
 	}
 }
 
-typedef enum RETCODE {
+enum RETCODE {
 	RT_VOID=0,
 	RT_GAMEOVER,
 	RT_CANCEL
-}RETCODE;
+};
 
 SDL_Cursor *mouse_curs;
 
@@ -130,7 +136,7 @@ RETCODE run_game_mainloop(GAMETYPE gametype,int wide) {
 					return RT_CANCEL;
 					break;
 // 				case SDLK_g:
-// 					board->timer=1;
+// 					board.timer=1;
 // 					break;
 // #ifdef PANDORA
 // 				case SDLK_c:
@@ -141,31 +147,31 @@ RETCODE run_game_mainloop(GAMETYPE gametype,int wide) {
 // 					break;
 // #endif
 // 				case SDLK_UP:
-// 					if (board->cursy>0)
-// 						board->cursy--;
+// 					if (board.cursy>0)
+// 						board.cursy--;
 // 					break;
 				}
 				break;
 			case SDL_MOUSEBUTTONDOWN: 
 				omx=omy=-1;
-				screenspace2gemspace(board,event.button.x,event.button.y,&board->cursx,&board->cursy);
-				if (board->cursx !=-1 && board->cursy!=-1) {
+				screenspace2gemspace(board,event.button.x,event.button.y,&board.cursx,&board.cursy);
+				if (board.cursx !=-1 && board.cursy!=-1) {
 					omx=event.button.x;
 					omy=event.button.y;
 				}
-				//printf("Click %d,%d -> %d %d\n",event.button.x,event.button.y,board->cursx,board->cursy);
+				//printf("Click %d,%d . %d %d\n",event.button.x,event.button.y,board.cursx,board.cursy);
 				break;
 			//case SDL_MOUSEBUTTONUP:
 			case SDL_MOUSEMOTION:
 				if (event.motion.state==SDL_PRESSED && omx!=-1 && omy!=-1) {
 
 					screenspace2gemspace(board,event.motion.x,event.motion.y,&ox,&oy);
-					if (ox!=board->cursx || oy!=board->cursy) {
-						//printf("Motion %d,%d -> %d %d\n",event.motion.x,event.motion.y,ox,oy);
-						if (ox!=-1 && oy!=-1 && board->block_input==0) {
+					if (ox!=board.cursx || oy!=board.cursy) {
+						//printf("Motion %d,%d . %d %d\n",event.motion.x,event.motion.y,ox,oy);
+						if (ox!=-1 && oy!=-1 && board.block_input==0) {
 							omx=omy=-1;
 							play_sound(SID_SWAP);
-							begin_swap(board,ox,oy,board->cursx,board->cursy);
+							begin_swap(board,ox,oy,board.cursx,board.cursy);
 						}
 					}
 				}
@@ -174,45 +180,45 @@ RETCODE run_game_mainloop(GAMETYPE gametype,int wide) {
 		}
 
 		draw_all(board);
-		if (board->combo_cnt>0) {
-			board->combo_cnt--;
-			if (board->combo_cnt==0) {
-				board->combo--;
-				if (board->combo==0) board->combo=1;
-				else board->combo_cnt=110-(board->combo*10);
-				//board->combo=1;
+		if (board.combo_cnt>0) {
+			board.combo_cnt--;
+			if (board.combo_cnt==0) {
+				board.combo--;
+				if (board.combo==0) board.combo=1;
+				else board.combo_cnt=110-(board.combo*10);
+				//board.combo=1;
 			}
 		}
 		if (could_this_be_the_end(board)!=0) {
 			/* TODO: Save score in hiscore here */
-			if (ishiscore(gametype,board->score)) {
-#ifdef PANDORA
+			if (ishiscore(gametype,board.score)) {
+version(PANDORA) {
 				char *string=getenv("USER");
 				stoupper(string);
-#else
-				char string[32];
+} else {
+				char[32] string;
 				play_music(SID_MUSIC3);
 				input_username(string,32);
 				printf("String =%s\n",string);
-#endif
-				addhiscore(gametype,string,board->score);
+}
+				addhiscore(gametype,string,board.score);
 			}
 			free_board(board);
 			return RT_GAMEOVER;
 		}
-#ifdef PANDORA
+version(PANDORA) {
 		SDL_BlitSurface(buffer,NULL,screen,NULL);
 		SDL_Flip(screen);
-#else
+} else {
 		SDL_SoftStretch(buffer,NULL,screen,NULL);
-		SDL_UpdateRect(screen,0,0,screen->w,screen->h);
+		SDL_UpdateRect(screen,0,0,screen.w,screen.h);
 		frame_skip();//SDL_Delay(13);
-#endif
+}
 	}
 
 }
 
-void intro_loop(void) {
+void intro_loop() {
 	SDL_Event event;
 	int counter=60*5;
 	while (counter>0){
@@ -232,7 +238,7 @@ void intro_loop(void) {
 
 }
 
-void show_highscore(void) {
+void show_highscore() {
 	SDL_Event event;
 	int counter=60*5;
 	int difficulty=0;
@@ -259,12 +265,12 @@ static SDL_Rect butt_r={112,67,176,35};
 
 int do_button(SDL_Rect *r,char *text,int mx,int my,int button) {
 	draw_button(r,text);
-	if (mx>r->x && mx<r->x+r->w && my>r->y && my<r->y+r->h && button!=0)
+	if (mx>r.x && mx<r.x+r.w && my>r.y && my<r.y+r.h && button!=0)
 		return 1;
 	return 0;
 }
 
-int main_menu(void) {
+int main_menu() {
 	SDL_Event event;
 	int gametype=GM_LINE;
 	int menulevel=2;
@@ -330,7 +336,7 @@ int main_menu(void) {
 	return gametype;
 }
 
-int main(int argc,char *argv[]) {
+int main(string[] args) {
 	BOARD *board=create_board(INLINE,9,7,MAXGEMCOL-1);
 	int bstate=0;
 	SDL_Event event;
@@ -347,10 +353,10 @@ int main(int argc,char *argv[]) {
 	loadhiscore("sc.dat");
 
 	mouse_curs=NULL;
-#ifndef PANDORA
+version(PANDORA) {} else {
 	init_frame_skip();
 	reset_frame_skip();
-#endif
+}
 	play_music(SID_MUSIC2);
 	intro_loop();
 	while ((gt=main_menu())!=-1) {

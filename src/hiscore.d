@@ -1,14 +1,23 @@
-#include <stdio.h>
-#include "board.h"
-#include "hiscore.h"
+module hiscore;
 
+import core.stdc.stdio;
+import board;
+import hiscore;
 
+struct SCORE{
+	char[32] name;
+	int		 score;
+};
 
-void inithiscore(void) {
+enum MAXHISCORE = 5;
+
+SCORE[GM_MAX][MAXHISCORE] highscore;
+
+void inithiscore() {
 	memset(highscore,0,sizeof(highscore));
 }
 void loadhiscore(char *file) {
-	char name[32];
+	char[32] name;
 	int score,gt,rc;
 	FILE *f=fopen(file,"r");
 	if (f==NULL) return;

@@ -1,7 +1,7 @@
-#include <stdint.h>
-#include "random.h"
+import core.stdc.stdint;
+import random;
 
-static uint32_t state[16];
+static uint32_t[16] state;
 static uint32_t index;
  
 void init_rand(uint32_t x)
@@ -15,15 +15,15 @@ void init_rand(uint32_t x)
 
 }
  
-uint32_t random_well512(void)
+uint32_t random_well512()
 {
-	unsigned int a = state[index];
-	unsigned int c = state[(index+13)&15];
-	unsigned int b = a^c^(a<<16)^(c<<15);
+	uint a = state[index];
+	uint c = state[(index+13)&15];
+	uint b = a^c^(a<<16)^(c<<15);
 	c = state[(index+9)&15];
 	c ^= (c>>11);
 	a = state[index] = b^c;
-	unsigned int d = a^((a<<5)&0xda442d20U);
+	uint d = a^((a<<5)&0xda442d20U);
 	index = (index + 15)&15;
 	a = state[index];
 	state[index] = a^b^d^(a<<2)^(b<<18)^(c<<28);
